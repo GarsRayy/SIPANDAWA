@@ -1,73 +1,86 @@
-# React + TypeScript + Vite
+# 💧 SIPANDAWA - Sistem Pemantauan Kualitas Air Terpadu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+![SIPANDAWA Banner](src/assets/hero.png)
 
-Currently, two official plugins are available:
+**SIPANDAWA** adalah platform *Software as a Service (SaaS)* dan ekosistem *Internet of Things (IoT)* modern untuk memantau kualitas air (TDS & Suhu) secara real-time. Dibangun dengan antarmuka *Glassmorphism* yang elegan, fitur *Magic UX* untuk konfigurasi perangkat yang *seamless*, serta integrasi penuh dengan cloud backend untuk keandalan tingkat produksi.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## ✨ Fitur Utama
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 🚀 **Real-Time Telemetry**: Memantau kualitas air (TDS dalam satuan `ppm` dan Suhu dalam `°C`) yang selalu diperbarui secara real-time tanpa perlu me-refresh halaman menggunakan konektivitas WebSocket Supabase.
+- 🪄 **The Magic UX Device Setup**: Alur integrasi perangkat IoT yang sangat mulus (plug-and-play). Sistem otomatis mendeteksi ketika perangkat keras terhubung dan siap memancarkan data.
+- 📱 **WhatsApp Alerts**: Notifikasi terotomatisasi yang dikirimkan via WhatsApp (melalui Fonnte) untuk pelaporan rutin atau peringatan anomali (kualitas air buruk).
+- 🔐 **Secure Authentication**: Sistem Login & Registrasi yang aman ditenagai oleh Supabase Auth.
+- 🎨 **Premium UI/UX Design**: Antarmuka modern bergaya *Glassmorphism* yang dikembangkan menggunakan Tailwind CSS dan komponen interaktif.
 
-## Expanding the ESLint configuration
+## 🛠️ Teknologi yang Digunakan
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Frontend (Web Dashboard)
+- **Framework:** React 18 + TypeScript + Vite
+- **Styling:** Tailwind CSS + Lucide Icons
+- **Backend/BaaS:** Supabase (PostgreSQL, Auth, Realtime Database)
+- **Routing:** React Router
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Hardware (IoT Node)
+- **Microcontroller:** ESP32
+- **Sensors:** Analog TDS Sensor, DS18B20 (Temperature Sensor)
+- **Libraries:** WiFiManager, DallasTemperature, OneWire, FonnteDuino
+- **Communication:** HTTP POST (to Supabase REST API)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 📂 Struktur Proyek
+
+```text
+SIPANDAWA/
+├── src/                  # Source code React Frontend (Web App)
+│   ├── assets/           # Asset statis (gambar, icon)
+│   ├── components/       # Komponen UI Reusable
+│   ├── pages/            # Halaman utama (Landing, Dashboard, Login, Setup)
+│   └── supabaseClient.ts # Konfigurasi Klien Supabase
+├── code.cpp              # Source code ESP32 (Firmware IoT)
+└── .gitignore            # Git ignore configuration
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🚀 Panduan Instalasi (Web Dashboard)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/GarsRayy/SIPANDAWA.git
+   cd SIPANDAWA
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi Environment Variables**
+   Buat file `.env` di root directory proyek, lalu tambahkan *credentials* dari project Supabase Anda:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+   ```
+
+4. **Jalankan Development Server**
+   ```bash
+   npm run dev
+   ```
+   Buka `http://localhost:5173` di browser Anda untuk melihat aplikasi secara lokal.
+
+## 🔌 Panduan Setup Perangkat Keras (ESP32)
+
+1. Buka file `code.cpp` menggunakan **Arduino IDE** atau **PlatformIO**.
+2. Pastikan library pendukung seperti `WiFiManager`, `DallasTemperature`, dan `FonnteDuino` telah terinstal di *Library Manager*.
+3. Ubah bagian kredensial pada *source code* dengan data milik Anda:
+   - `YOUR_SUPABASE_URL` dan `YOUR_SUPABASE_KEY` (Supabase API)
+   - `YOUR_FONNTE_TOKEN` dan `YOUR_PHONE_NUMBER` (Untuk notifikasi via WhatsApp)
+4. Lakukan *Compile* & *Upload* firmware ke board ESP32 Anda.
+5. Saat ESP32 pertama kali dinyalakan, sambungkan *smartphone* atau PC Anda ke jaringan WiFi `Setup-SIPANDAWA` untuk mengatur koneksi internet lokal melalui *captive portal*.
+
+---
+
+## 📄 Lisensi
+
+Proyek ini dikembangkan oleh Kelompok 3 (KSI RC) dan bersifat *open-source* untuk keperluan edukasi dan pengembangan IoT tingkat lanjut.
