@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { 
   Activity, Droplets, Thermometer, AlertTriangle, Download, 
-  Settings, LayoutDashboard, Bell, Map as MapIcon, Crosshair, Sparkles, LogOut
+  Settings, LayoutDashboard, Bell, Map as MapIcon, Crosshair, Sparkles, LogOut, Menu, X
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -117,6 +117,7 @@ export default function Dashboard() {
   const [logs, setLogs] = useState<any[]>([]);
   const [filterPeriod, setFilterPeriod] = useState(1); // 1 = Today, 7 = Last 7 Days, 30 = This Month
   const [userEmail, setUserEmail] = useState<string>('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Interactive UI States
   const [showNotifications, setShowNotifications] = useState(false);
@@ -295,27 +296,43 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
-      {/* Sidebar */}
+    <div className="flex h-screen w-full bg-[#f8fafc] overflow-hidden selection:bg-sky-100 selection:text-sky-900 font-sans relative">
+      
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       <motion.aside 
         initial={{ x: -250 }}
         animate={{ x: 0 }}
-        className="w-64 glass-panel m-4 flex flex-col justify-between border-white/60"
+        className={`w-64 glass-panel m-4 flex flex-col justify-between border-white/60 overflow-y-auto fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-[150%]'}`}
       >
         <div>
-          <div className="p-6 flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl shadow-lg shadow-sky-200">
-              <Droplets className="text-white" size={24} />
+          <div className="p-6 flex items-center justify-between md:justify-start gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl shadow-lg shadow-sky-200">
+                <Droplets className="text-white" size={24} />
+              </div>
+              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-800">
+                SIPANDAWA
+              </h1>
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 to-blue-800">
-              SIPANDAWA
-            </h1>
+            <button onClick={() => setIsMobileMenuOpen(false)} className="md:hidden text-slate-400 hover:text-slate-700">
+              <X size={24} />
+            </button>
           </div>
           <nav className="px-4 mt-6 flex flex-col gap-2">
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   activeTab === item.id 
                     ? 'bg-white shadow-md text-sky-600 font-semibold' 
@@ -345,23 +362,31 @@ export default function Dashboard() {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition-all active:scale-95"
           >
-            <LogOut size={16} />
-            Keluar
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-4 pl-0 overflow-y-auto">
+      <main className="flex-1 p-4 pl-4 md:pl-0 overflow-y-auto w-full">
         <div className="h-full flex flex-col gap-6">
           
           {/* Header */}
-          <header className="glass-panel px-8 py-4 flex justify-between items-center relative">
-            <h2 className="text-2xl font-bold text-slate-800 capitalize">
-              {menuItems.find(m => m.id === activeTab)?.label}
-            </h2>
+          <header className="glass-panel px-4 md:px-8 py-4 flex justify-between items-center relative">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 text-slate-500 hover:text-sky-600 focus:outline-none bg-slate-100 rounded-lg"
+              >
+                <Menu size={20} />
+              </button>
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800 capitalize">
+                {menuItems.find(m => m.id === activeTab)?.label}
+              </h2>
+            </div>
             <div className="flex items-center gap-4">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
