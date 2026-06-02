@@ -98,6 +98,7 @@ export default function Dashboard() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+
   // Ambil info user yang sedang login
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -183,27 +184,61 @@ export default function Dashboard() {
 
   // Export PDF Logic
   const exportPDF = () => {
+    if (logs.length === 0) {
+      setToastMessage('Tidak ada data untuk diekspor!');
+      setTimeout(() => setToastMessage(null), 3000);
+      return;
+    }
+
     const doc = new jsPDF();
-    doc.text("Laporan Kualitas Air SIPANDAWA", 14, 15);
-    doc.setFontSize(10);
-    doc.text(`Dicetak pada: ${format(new Date(), 'dd MMM yyyy HH:mm')}`, 14, 22);
     
-    const tableData = logs.slice(0, 50).map(log => [
+    // Header Kop Laporan
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(14, 165, 233); // Warna Sky-500
+    doc.text('SIPANDAWA', 14, 20);
+    
+    doc.setFontSize(10);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text('Sistem Peringatan Dini Pemantauan Air Desa', 14, 25);
+    doc.text(`Dicetak pada: ${format(new Date(), 'dd MMMM yyyy HH:mm')} WIB`, 14, 30);
+    
+    // Garis Pemisah
+    doc.setDrawColor(226, 232, 240); // Slate-200
+    doc.setLineWidth(0.5);
+    doc.line(14, 35, 196, 35);
+    
+    // Judul Dokumen
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(15, 23, 42); // Slate-900
+    doc.text('LAPORAN MONITORING KUALITAS AIR', 14, 45);
+    
+    // Format data untuk tabel
+    const tableData = logs.map((log, index) => [
+      index + 1,
       format(new Date(log.created_at), 'dd MMM yyyy HH:mm'),
-      log.tds_value.toFixed(1),
-      log.temperature.toFixed(1),
+      `${log.tds_value.toFixed(1)} ppm`,
+      `${log.temperature.toFixed(1)} °C`,
       log.status
     ]);
 
+    // Render Tabel menggunakan jspdf-autotable (menggunakan properti type-safe)
     autoTable(doc, {
-      startY: 30,
-      head: [['Waktu', 'TDS (ppm)', 'Suhu (°C)', 'Status']],
+      startY: 50,
+      head: [['No', 'Waktu Pengamatan', 'Nilai TDS', 'Suhu Air', 'Status']],
       body: tableData,
-      theme: 'grid',
+      theme: 'striped',
       headStyles: { fillColor: [14, 165, 233] }, // Sky blue headers
+      styles: { fontSize: 10, cellPadding: 3 }
     });
+
+    // Simpan file PDF
+    doc.save(`Laporan_Sipandawa_${format(new Date(), 'dd_MM_yyyy')}.pdf`);
     
-    doc.save("Laporan_SIPANDAWA.pdf");
+    setToastMessage('Laporan PDF berhasil diunduh!');
+    setTimeout(() => setToastMessage(null), 3000);
   };
 
   const getStatusColor = (status: string) => {
@@ -466,14 +501,20 @@ export default function Dashboard() {
                             <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
                             <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
                           </linearGradient>
+                          <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                          </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                         <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                        <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
                         <RechartsTooltip 
                           contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a' }}
                         />
-                        <Area type="monotone" dataKey="tds_value" name="TDS (ppm)" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorTds)" />
+                        <Area yAxisId="left" type="monotone" dataKey="tds_value" name="TDS (ppm)" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorTds)" />
+                        <Area yAxisId="right" type="monotone" dataKey="temperature" name="Suhu (°C)" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorTemp)" />
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
