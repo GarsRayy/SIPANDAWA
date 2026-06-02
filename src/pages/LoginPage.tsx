@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
@@ -14,6 +14,15 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Jika sudah login, redirect langsung ke dashboard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate('/dashboard', { replace: true });
+      }
+    });
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -27,7 +36,7 @@ export default function LoginPage() {
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setSuccess('Akun dibuat! Cek email untuk konfirmasi, lalu masuk.');
+        setSuccess('Akun berhasil dibuat! Cek email untuk konfirmasi, lalu masuk.');
         setIsLogin(true);
       }
     } catch (err: any) {
@@ -102,14 +111,6 @@ export default function LoginPage() {
               {loading ? 'Memproses...' : isLogin ? 'Masuk ke Dashboard' : 'Buat Akun Baru'}
             </motion.button>
           </form>
-
-          <div className="mt-6 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-100" /><span className="text-xs text-slate-400 font-medium">atau</span><div className="flex-1 h-px bg-slate-100" />
-          </div>
-          <button onClick={() => navigate('/setup')}
-            className="mt-4 w-full py-3 border-2 border-dashed border-sky-200 rounded-xl text-sky-600 font-semibold text-sm hover:bg-sky-50 transition-colors">
-            Coba Demo Tanpa Login →
-          </button>
         </div>
         <p className="text-center text-slate-400 text-xs mt-6">© 2026 SIPANDAWA · Pervasif Computing</p>
       </motion.div>

@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { 
   Activity, Droplets, Thermometer, AlertTriangle, Download, 
-  Settings, LayoutDashboard, Bell, Map as MapIcon, Crosshair, Sparkles
+  Settings, LayoutDashboard, Bell, Map as MapIcon, Crosshair, Sparkles, LogOut
 } from 'lucide-react';
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, 
@@ -73,10 +74,12 @@ function LocateControl() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoaded, setIsLoaded] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [filterPeriod, setFilterPeriod] = useState(1); // 1 = Today, 7 = Last 7 Days, 30 = This Month
+  const [userEmail, setUserEmail] = useState<string>('');
   
   // Interactive UI States
   const [showNotifications, setShowNotifications] = useState(false);
@@ -93,6 +96,21 @@ export default function Dashboard() {
     e.preventDefault();
     setToastMessage('Konfigurasi berhasil disimpan!');
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Ambil info user yang sedang login
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+      }
+    });
+  }, []);
+
+  // Handler Logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login', { replace: true });
   };
 
   // Fetch initial data & subscribe to real-time changes
@@ -238,14 +256,28 @@ export default function Dashboard() {
             ))}
           </nav>
         </div>
-        <div className="p-6">
-          <div className="p-4 bg-sky-50 rounded-xl border border-sky-100 flex items-center gap-3">
+        <div className="p-6 space-y-3">
+          {/* User Info */}
+          <div className="p-4 bg-white/70 rounded-xl border border-slate-100">
+            <p className="text-xs text-slate-400 font-medium mb-1">Masuk sebagai</p>
+            <p className="text-sm font-semibold text-slate-700 truncate">{userEmail || '...'}</p>
+          </div>
+          {/* DB Status */}
+          <div className="p-3 bg-sky-50 rounded-xl border border-sky-100 flex items-center gap-3">
             <div className="relative">
               <div className="w-3 h-3 bg-emerald-400 rounded-full animate-ping absolute"></div>
               <div className="w-3 h-3 bg-emerald-500 rounded-full relative"></div>
             </div>
             <span className="text-sm font-medium text-slate-600">DB Connected</span>
           </div>
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all"
+          >
+            <LogOut size={16} />
+            Keluar
+          </button>
         </div>
       </motion.aside>
 

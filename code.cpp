@@ -10,9 +10,9 @@
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// --- Konfigurasi Supabase ---
-const String supabase_url = "YOUR_SUPABASE_URL";
-const String supabase_key = "YOUR_SUPABASE_KEY";
+// --- Konfigurasi Supabase (Ganti dengan kredensial Anda) ---
+const String supabase_url = "https://YOUR_PROJECT_ID.supabase.co/rest/v1/water_quality_logs";
+const String supabase_key = "YOUR_SUPABASE_ANON_KEY";
 
 // --- Konfigurasi Fonnte ---
 FonnteDuino fonnte("YOUR_FONNTE_TOKEN"); 
@@ -28,6 +28,7 @@ const long cloudInterval   = 60000;
 namespace pin {
   const byte tds_sensor = 34;
   const byte one_wire_bus = 15; 
+  const byte reset_wifi = 0; // Menggunakan tombol BOOT bawaan ESP32 (GPIO 0)
 }
 
 namespace device {
@@ -46,6 +47,7 @@ DallasTemperature dallasTemperature(&oneWire);
 
 void setup() {
   Serial.begin(115200);
+  pinMode(pin::reset_wifi, INPUT_PULLUP); // Set pin BOOT sebagai input pull-up
   dallasTemperature.begin();
 
   lcd.init();
@@ -78,6 +80,10 @@ void setup() {
       lcd.clear();
       lcd.print("WiFi Terhubung!");
       delay(1000);
+      
+      // Kirim Notifikasi WA online ke Fonnte
+      Serial.println("Kirim notifikasi online ke WhatsApp...");
+      fonnte.sendMessage("YOUR_PHONE_NUMBER", "🚀 SIPANDAWA Online!\nAlat telah berhasil terhubung ke WiFi dan siap memonitor air.");
   }
 
   lcd.clear();
@@ -97,8 +103,10 @@ void kirimDataKeSupabase(float tds, float temp, String status) {
     http.addHeader("Authorization", "Bearer " + supabase_key);
     http.addHeader("Prefer", "return=minimal");
 
-    // Menambahkan lokasi statis untuk ditampilkan di Web GIS Map Dashboard
-    String httpRequestData = "{\"tds_value\":\"" + String(tds, 2) + "\",\"temperature\":\"" + String(temp, 2) + "\",\"status\":\"" + status + "\",\"location_lat\":\"-6.200000\",\"location_lng\":\"106.816666\"}";
+    // Format payload JSON sesuai kolom tabel water_quality_logs
+    String httpRequestData = "{\"tds_value\":" + String(tds, 2) + 
+                             ",\"temperature\":" + String(temp, 2) + 
+                             ",\"status\":\"" + status + "\"}";
     
     Serial.print("Kirim payload ke Supabase: ");
     Serial.println(httpRequestData);
@@ -108,6 +116,10 @@ void kirimDataKeSupabase(float tds, float temp, String status) {
     if (httpResponseCode > 0) {
       Serial.print("Supabase HTTP Response code: ");
       Serial.println(httpResponseCode);
+      // Dapatkan respons detail jika terjadi error/pesan dari Supabase
+      String response = http.getString();
+      Serial.print("Supabase Response: ");
+      Serial.println(response);
     } else {
       Serial.print("Error saat POST ke Supabase: ");
       Serial.println(http.errorToString(httpResponseCode).c_str());
@@ -118,7 +130,37 @@ void kirimDataKeSupabase(float tds, float temp, String status) {
   }
 }
 
+void checkResetButton() {
+  // Jika tombol BOOT (GPIO 0) ditekan (LOW)
+  if (digitalRead(pin::reset_wifi) == LOW) {
+    unsigned long pressStart = millis();
+    bool feedbackGiven = false;
+    
+    while (digitalRead(pin::reset_wifi) == LOW) {
+      // Jika ditahan lebih dari 3 detik
+      if (millis() - pressStart > 3000) {
+        if (!feedbackGiven) {
+          Serial.println("!!! Menerima perintah Reset WiFi !!!");
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Reset WiFi...");
+          lcd.setCursor(0, 1);
+          lcd.print("Tunggu Sebentar");
+          
+          WiFiManager wm;
+          wm.resetSettings(); // Hapus kredensial WiFi yang tersimpan
+          feedbackGiven = true;
+          delay(1000);
+          ESP.restart(); // Restart ESP32 untuk masuk ke portal setup
+        }
+      }
+      delay(50);
+    }
+  }
+}
+
 void loop() {
+  checkResetButton(); // Cek tombol reset WiFi setiap siklus loop
   baca_Tds();
   delay(1000);
 }
