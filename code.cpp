@@ -7,15 +7,16 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <FonnteDuino.h>
+#include "credentials.h" // File kredensial pribadi (JANGAN push ke GitHub!)
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-// --- Konfigurasi Supabase (Ganti dengan kredensial Anda) ---
-const String supabase_url = "https://YOUR_PROJECT_ID.supabase.co/rest/v1/water_quality_logs";
-const String supabase_key = "YOUR_SUPABASE_ANON_KEY";
+// --- Konfigurasi dari credentials.h ---
+const String supabase_url = SUPABASE_URL;
+const String supabase_key = SUPABASE_KEY;
 
 // --- Konfigurasi Fonnte ---
-FonnteDuino fonnte("YOUR_FONNTE_TOKEN"); 
+FonnteDuino fonnte(FONNTE_TOKEN); 
 
 // --- Timer & Interval ---
 unsigned long routinePreviousMillis = 0;
@@ -83,7 +84,7 @@ void setup() {
       
       // Kirim Notifikasi WA online ke Fonnte
       Serial.println("Kirim notifikasi online ke WhatsApp...");
-      fonnte.sendMessage("YOUR_PHONE_NUMBER", "🚀 SIPANDAWA Online!\nAlat telah berhasil terhubung ke WiFi dan siap memonitor air.");
+      fonnte.sendMessage(PHONE_NUMBER, "🚀 SIPANDAWA Online!\nAlat telah berhasil terhubung ke WiFi dan siap memonitor air.");
   }
 
   lcd.clear();
@@ -212,7 +213,7 @@ void baca_Tds() {
         pesan += "Suhu: " + String(sensor::waterTemp, 1) + " °C\n";
         pesan += "Periksa segera!";
         
-        fonnte.sendMessage("YOUR_PHONE_NUMBER", pesan); 
+        fonnte.sendMessage(PHONE_NUMBER, pesan); 
         routinePreviousMillis = currentMillis; 
     }
   } else {
@@ -224,7 +225,7 @@ void baca_Tds() {
       pesan += "TDS: " + String(sensor::tds, 1) + " ppm\n";
       pesan += "Suhu: " + String(sensor::waterTemp, 1) + " °C";
 
-      fonnte.sendMessage("YOUR_PHONE_NUMBER", pesan);
+      fonnte.sendMessage(PHONE_NUMBER, pesan);
       anomalyPreviousMillis = currentMillis;
     }
   }
