@@ -309,9 +309,7 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <motion.aside 
-        initial={{ x: -250 }}
-        animate={{ x: 0 }}
+      <aside 
         className={`w-64 glass-panel m-4 flex flex-col justify-between border-white/60 overflow-y-auto fixed inset-y-0 left-0 z-50 md:relative md:translate-x-0 transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-[150%]'}`}
       >
         <div>
@@ -368,7 +366,7 @@ export default function Dashboard() {
             Logout
           </button>
         </div>
-      </motion.aside>
+      </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-4 pl-4 md:pl-0 overflow-y-auto w-full">
