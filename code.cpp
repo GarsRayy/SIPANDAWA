@@ -24,7 +24,7 @@ unsigned long anomalyPreviousMillis = 0;
 unsigned long cloudPreviousMillis = 0;
 const long routineInterval = 1260000;
 const long anomalyInterval = 600000;
-const long cloudInterval   = 60000;
+const long cloudInterval   = 5000;  // Kirim data ke database setiap 5 detik (real-time)
 
 namespace pin {
   const byte tds_sensor = 34;
