@@ -73,6 +73,43 @@ function LocateControl() {
   );
 }
 
+const CircularGauge = ({ value, max, unit, label, icon: Icon, colorClass, gradientClass }: any) => {
+  const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div className="flex items-center gap-6">
+      <div className="relative w-32 h-32 flex-shrink-0 flex items-center justify-center">
+        <svg className="w-full h-full transform -rotate-90 drop-shadow-sm" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r={radius} stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100" />
+          <motion.circle 
+            cx="50" cy="50" r={radius} 
+            stroke="currentColor" strokeWidth="8" fill="transparent" 
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            strokeLinecap="round"
+            className={colorClass}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-black text-slate-800">{value.toFixed(1)}</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{unit}</span>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        <div className={`p-2.5 w-max rounded-xl mb-2 shadow-lg ${gradientClass}`}>
+          <Icon className="text-white" size={20} />
+        </div>
+        <p className="text-slate-500 font-medium text-sm leading-tight max-w-[120px]">{label}</p>
+      </div>
+    </div>
+  );
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
@@ -404,49 +441,33 @@ export default function Dashboard() {
                 {/* TDS Card */}
                 <motion.div 
                   whileHover={{ y: -5 }}
-                  className="glass-panel p-6 flex flex-col justify-between"
+                  className="glass-panel p-6 flex flex-col justify-center items-center"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-slate-500 font-medium">Total Dissolved Solids</p>
-                      <h3 className="text-5xl font-bold text-slate-800 mt-2">
-                        {currentData.tds_value ? currentData.tds_value.toFixed(1) : 0} <span className="text-xl text-slate-400 font-normal">ppm</span>
-                      </h3>
-                    </div>
-                    <div className="p-3 bg-sky-50 rounded-2xl">
-                      <Droplets className="text-sky-500" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-6 w-full bg-slate-100 rounded-full h-2">
-                    <motion.div 
-                      className="bg-sky-400 h-2 rounded-full" 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min(((currentData.tds_value || 0) / 1000) * 100, 100)}%` }}
-                      transition={{ duration: 1 }}
-                    />
-                  </div>
+                  <CircularGauge 
+                    value={currentData.tds_value || 0} 
+                    max={1000} 
+                    unit="ppm" 
+                    label="Total Dissolved Solids" 
+                    icon={Droplets} 
+                    colorClass="text-sky-500" 
+                    gradientClass="bg-gradient-to-br from-sky-400 to-blue-500 shadow-sky-500/30"
+                  />
                 </motion.div>
 
                 {/* Temperature Card */}
                 <motion.div 
                   whileHover={{ y: -5 }}
-                  className="glass-panel p-6 flex flex-col justify-between"
+                  className="glass-panel p-6 flex flex-col justify-center items-center"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-slate-500 font-medium">Suhu Air</p>
-                      <h3 className="text-5xl font-bold text-slate-800 mt-2">
-                        {currentData.temperature ? currentData.temperature.toFixed(1) : 0} <span className="text-xl text-slate-400 font-normal">°C</span>
-                      </h3>
-                    </div>
-                    <div className="p-3 bg-amber-50 rounded-2xl">
-                      <Thermometer className="text-amber-500" size={28} />
-                    </div>
-                  </div>
-                  <div className="mt-6 flex items-center gap-2 text-sm text-slate-500">
-                    <span className="text-emerald-500 font-medium">Aktif</span>
-                    <span>Diperbarui secara real-time</span>
-                  </div>
+                  <CircularGauge 
+                    value={currentData.temperature || 0} 
+                    max={50} 
+                    unit="°C" 
+                    label="Suhu Air Terkini" 
+                    icon={Thermometer} 
+                    colorClass="text-amber-500" 
+                    gradientClass="bg-gradient-to-br from-amber-400 to-orange-500 shadow-amber-500/30"
+                  />
                 </motion.div>
 
                 {/* Status Card */}
@@ -493,30 +514,48 @@ export default function Dashboard() {
                 </div>
                 
                 {filteredLogs.length > 0 ? (
-                  <div className="flex-1 w-full min-h-[400px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={filteredLogs} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorTds" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
-                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                        <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                        <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                        <RechartsTooltip 
-                          contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a' }}
-                        />
-                        <Area yAxisId="left" type="monotone" dataKey="tds_value" name="TDS (ppm)" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorTds)" />
-                        <Area yAxisId="right" type="monotone" dataKey="temperature" name="Suhu (°C)" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorTemp)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                  <div className="flex-1 w-full min-h-[600px] flex flex-col gap-6">
+                    <div className="flex-1 w-full border border-slate-100 bg-white/40 rounded-2xl p-4 shadow-inner relative overflow-hidden">
+                      <h4 className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2"><Droplets size={16} className="text-sky-500" /> Tren TDS (ppm)</h4>
+                      <div className="absolute inset-x-0 bottom-0 top-10">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={filteredLogs} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorTds" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="#38bdf8" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                            <Area type="monotone" dataKey="tds_value" name="TDS (ppm)" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorTds)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 w-full border border-slate-100 bg-white/40 rounded-2xl p-4 shadow-inner relative overflow-hidden">
+                      <h4 className="text-sm font-bold text-slate-600 mb-2 flex items-center gap-2"><Thermometer size={16} className="text-amber-500" /> Tren Suhu Air (°C)</h4>
+                      <div className="absolute inset-x-0 bottom-0 top-10">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={filteredLogs} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                            <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                            <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                            <RechartsTooltip contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', color: '#0f172a', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                            <Area type="monotone" dataKey="temperature" name="Suhu (°C)" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorTemp)" />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex-1 flex items-center justify-center text-slate-500">
